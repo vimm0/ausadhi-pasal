@@ -4,7 +4,7 @@ from .models import Payment
 
 
 class PaymentAdmin(admin.ModelAdmin):
-	fields = ('amount', 'method', 'status')
+    fields = ('amount', 'method', 'status')
 
 
 admin.site.register(Payment, PaymentAdmin)

@@ -40,19 +40,22 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser):
-   
-
     full_name = models.CharField(max_length=255, unique=True)
     email = models.EmailField(
         verbose_name='email address',
         max_length=255,
         unique=True,
     )
+    institute = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=255)
+    address = models.CharField(max_length=255)
+    pan_number = models.CharField(max_length=255)
 
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
-    is_customer = models.BooleanField(default=False)
+    is_client = models.BooleanField(default=False)
+    is_supplier = models.BooleanField(default=False)
 
     objects = UserManager()
 
