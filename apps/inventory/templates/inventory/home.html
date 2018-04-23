@@ -16,40 +16,35 @@
     <div class="row center">
         <h5 class="header col s12 light">A modern responsive front-end framework based on Material Design</h5>
     </div>
-    <div class="row center">
-        <a href="http://materializecss.com/getting-started.html" id="download-button"
-           class="btn-large waves-effect waves-light orange">Get Started</a>
-    </div>
     <br><br>
-    <table class="responsive-table">
+<div class="z-depth-2" style="margin:-1.5rem 0 -1.5rem 0;">
+     <blockquote style="padding:.003rem;border-left: .5rem solid #ee6e73;">
+        <h4 style="margin:1rem;">{{ item_type|capfirst }}{{ item_list|pluralize:"s" }}</h4>
+    </blockquote>
+</div>
+
+    <table class="responsive-table z-depth-5">
         <thead>
         <tr>
-            <th>Name</th>
             <th>Item Name</th>
-            <th>Item Price</th>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Location</th>
+            <th>Stock Status</th>
+            <th>Stock Comments</th>
         </tr>
         </thead>
         <tbody>
-        <tr>
-            <td>Alvin</td>
-            <td>Eclair</td>
-            <td>$0.87</td>
-        </tr>
-        <tr>
-            <td>Alan</td>
-            <td>Jellybean</td>
-            <td>$3.76</td>
-        </tr>
-        <tr>
-            <td>Jonathan</td>
-            <td>Lollipop</td>
-            <td>$7.00</td>
-        </tr>
-        <tr>
-            <td>Shannon</td>
-            <td>KitKat</td>
-            <td>$9.99</td>
-        </tr>
+        {% for obj in item_list %}
+            <tr>
+                <td>{{ obj.sku }}</td>
+                <td>{{ obj.content_object }}</td>
+                <td>{{ obj.qty }}</td>
+                <td>{{ obj.location }}</td>
+                <td>{{ obj.stock_status }}</td>
+                <td>{{ obj.stock_comment }}</td>
+            </tr>
+        {% endfor %}
         </tbody>
     </table>
 </div>
