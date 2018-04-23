@@ -46,10 +46,10 @@ class User(AbstractBaseUser):
         max_length=255,
         unique=True,
     )
-    institute = models.CharField(max_length=255)
-    phone_number = models.CharField(max_length=255)
-    address = models.CharField(max_length=255)
-    pan_number = models.CharField(max_length=255)
+    # institute = models.CharField(max_length=255)
+    # phone_number = models.CharField(max_length=255)
+    # address = models.CharField(max_length=255)
+    # pan_number = models.CharField(max_length=255)
 
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
