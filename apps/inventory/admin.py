@@ -1,24 +1,13 @@
-from __future__ import absolute_import
 from django.contrib import admin
-
-from django.contrib import admin
-
-from .models import Inventory, ItemTemplate, Location, Log, Supplier
-from .models import Payment
+from .models import InventoryItem, StockStatus, Transaction
 
 
-class PaymentAdmin(admin.ModelAdmin):
-    fields = ('amount', 'method', 'status')
+class InventoryItemAdmin(admin.ModelAdmin):
+    search_fields = ('content_object',)
+    list_display = ('content_object', 'content_type', 'stock_status', 'qty', 'location')
+    list_filter = ('stock_status', 'location', 'content_type')
 
 
-class ItemTemplateAdmin(admin.ModelAdmin):
-    pass
-    # filter_horizontal = ('supplies', 'suppliers')
-
-
-admin.site.register(Location)
-admin.site.register(Log)
-admin.site.register(ItemTemplate, ItemTemplateAdmin)
-admin.site.register(Inventory)
-admin.site.register(Supplier)
-admin.site.register(Payment, PaymentAdmin)
+admin.site.register(StockStatus)
+admin.site.register(InventoryItem, InventoryItemAdmin)
+admin.site.register(Transaction)
