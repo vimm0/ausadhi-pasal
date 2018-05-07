@@ -1,84 +1,94 @@
-from django.core.exceptions import ValidationError
+# inventory
+from django.conf import settings
 from django.db import models
-
-# from django.db.models import fields
-
-from ..users.models import User
-
-STATUS = (
-    ('Pending', 'Pending'),
-    ('Failed', 'Failed'),
-    ('Succeed', 'Succeed')
-)
-
-METHOD = (
-    ('PayPal', 'PayPal'),
-
-)
-
-from django.forms import IntegerField
-from django.forms.widgets import Input
-from django.utils.translation import ugettext_lazy as _
-from decimal import Decimal
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.auth.models import User
 
 
-class PercentInput(Input):
-    """ A simple form input for a percentage """
-    input_type = 'text'
-
-    def _format_value(self, value):
-        if value is None:
-            return ''
-        return str(int(value * 100))
-
-    def render(self, name, value, attrs=None):
-        value = self._format_value(value)
-        return super(PercentInput, self).render(name, value, attrs)
-
-    def _has_changed(self, initial, data):
-        return super(PercentInput, self)._has_changed(self._format_value(initial), data)
-
-
-class PercentField(IntegerField):
-    """ A field that gets a value between 0 and 1 and displays as a value between 0 and 100"""
-    widget = PercentInput(attrs={"class": "percentInput", "size": 4})
-
-    default_error_messages = {
-        'positive': _(u'Must be a positive number.'),
-    }
-
-    def clean(self, value):
-        """
-        Validates that the input can be converted to a value between 0 and 1.
-        Returns a Decimal
-        """
-        value = super(PercentField, self).clean(value)
-        if value is None:
-            return None
-        if (value < 0):
-            raise ValidationError(self.error_messages['positive'])
-        return Decimal("%.2f" % (value / 100.0))
-
-
-class Scheme(models.Model):
+class StockStatus(models.Model):
     """
-    Record Scheme given to each User.
+    Stock status values such as "In Stock", "Backordered", etc.
     """
+    name = models.CharField(max_length=50)
+    description = models.CharField(max_length=255, blank=True, null=True)
 
-    user = models.ForeignKey(User, related_name='schemes', on_delete=models.CASCADE)
-    cause = models.CharField(max_length=255)
-    item = models.CharField(max_length=255)
-    discount = PercentField()
-    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    class Meta:
+        verbose_name_plural = 'Stock Status'
+
+    def __str__(self):
+        return self.name
 
 
-class Payment(models.Model):
-    scheme = models.OneToOneField(
-        Scheme,
-        on_delete=models.CASCADE,
-        primary_key=True,
+class InventoryItem(models.Model):
+    """
+    An inventoried item represented by any Django model by means of the Content
+    Types framework.
+    """
+    sku = models.CharField(max_length=75, unique=True, db_index=True)
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    qty = models.PositiveIntegerField(default=0)
+    location = models.CharField(max_length=50, blank=True, null=True)
+    stock_status = models.ForeignKey(StockStatus, db_index=True, on_delete=models.CASCADE)
+    stock_comment = models.CharField(max_length=255, blank=True, null=True)
+
+    # def __unicode__(self):
+    #     content_type = ContentType.objects.get_for_model(self.content_object)
+    #     return str(content_type.get_object_for_this_type(pk=self.object_id))
+
+    def __str__(self):
+        # from django.contrib.contenttypes.models import ContentType
+        # content_type = ContentType.objects.get_for_model(self.content_object)
+        return str(self.sku)
+
+
+class Transaction(models.Model):
+    """
+    A transaction which adds or removes items from inventory.
+    """
+    TYPE_RECIEVED = 1
+    TYPE_SOLD = 2
+    TYPE_RETURNED = 3
+    TYPE_INTERNAL = 4
+    TYPE_ADJUSTMENT = 5
+    TYPE_PHYSICAL_COUNT = 6
+    TYPE_CYCLE_COUNT = 7
+    TYPE_SCRAP = 8
+
+    TYPE_CHOICES = (
+        (TYPE_RECIEVED, 'Received'),
+        (TYPE_SOLD, 'Sold'),
+        (TYPE_RETURNED, 'Returned to Stock'),
+        (TYPE_INTERNAL, 'Internal Transfer'),
+        (TYPE_ADJUSTMENT, 'Adjustment'),
+        (TYPE_PHYSICAL_COUNT, 'Physical Count'),
+        (TYPE_CYCLE_COUNT, 'Cycle Count'),
+        (TYPE_SCRAP, 'Scrapped')
     )
-    amount = models.DecimalField(max_digits=15, decimal_places=2)
-    method = models.CharField(max_length=10, choices=METHOD)
-    status = models.CharField(max_length=10, choices=STATUS)
-    date = models.DateTimeField(auto_now=False, auto_now_add=False)
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.CASCADE)
+    transaction_type = models.PositiveIntegerField(choices=TYPE_CHOICES, db_index=True)
+    date = models.DateTimeField(auto_now_add=True, db_index=True)
+    comment = models.CharField(max_length=255, blank=True, null=True)
+    # optional generic relationship to associated object (eg. order, po, etc.)
+
+    content_type = models.ForeignKey(ContentType, blank=True, null=True, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField(blank=True, null=True)
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    def __str__(self):
+        return "%s on %s" % (self.get_transaction_type_display(), str(self.date))
+
+
+class TransactionItem(models.Model):
+    """
+    A line item on an inventory transaction.
+    """
+    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
+    item = models.ForeignKey(InventoryItem, on_delete=models.CASCADE)
+    qty = models.PositiveIntegerField(default=0)
+    unit_cost = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)

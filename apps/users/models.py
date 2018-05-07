@@ -21,6 +21,10 @@ class UserManager(BaseUserManager):
         )
 
         user.set_password(password)
+        # user.institute = institute
+        # user.phone_number = phone_number
+        # user.pan_number = pan_number
+        # user.address = address
         user.save(using=self._db)
         return user
 
@@ -46,6 +50,7 @@ class User(AbstractBaseUser):
         max_length=255,
         unique=True,
     )
+
     institute = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
@@ -63,11 +68,9 @@ class User(AbstractBaseUser):
     REQUIRED_FIELDS = ['email']
 
     def get_full_name(self):
-        # The user is identified by their Full Name
         return self.full_name
 
     def get_short_name(self):
-        # The user is identified by their Full Name
         return self.full_name
 
     def __str__(self):  # __unicode__ on Python 2
